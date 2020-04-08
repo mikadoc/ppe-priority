@@ -1,10 +1,27 @@
+import numpy as np
+import pandas as pd
+from scipy import stats
 
+###################################
+## Scoring and weighting options ##
+###################################
 
-# Domain Weighting
+# Set of facility types serving vulnerable or underserved populations
+VULN_FACILITIES = ['fqhc',
+                   'dsh',
+                   'rhc',
+                   'cah',
+                   'indian_tribal',
+                   'chc']
+
+# Domain weighting multipliers
 NEED_WEIGHT = 1
 VULN_WEIGHT = 1
 EXPOSURE_WEIGHT = 1
 CAPCITY_WEIGHT = 1
+
+
+
 
 
 ################
@@ -36,14 +53,53 @@ for vuln_type in VULN_FACILITIES:
     if vuln_type in facility_type:
         vuln_score += 1
 
-"""
+
 # Vulnerability score based on local CDC SVI
 # Incomplete, waiting on code to extract GIS data.
+
+def get_radius_svis(svi_data, facility_address, radius):
+"""
+Return an array containing SVI values for each census tract within RADIUS of facility address
+
+Parameters
+----------
+svi_data : <unknown GIS type>
+    GIS data containing census tract shape files and SVI values for each tract.
+
+facility_address : tuple
+    Tuple of strings in the following format (street_name_and_number, city, state, zip)
+
+radius : float
+    Radius facility address to create a buffer for identifying local census tracts
+
+Returns
+-------
+svi_array : ndarray
+    1-dimensional array containing SVI values for all census tracts within radius
+"""
+
+def get_regional_svis(svi_data, counties_list)
+"""
+Return an array containing SVI values for each census tract within a set of counties.
+
+Parameters
+----------
+svi_data : <unknown GIS type>
+    GIS data containing census tract shape files and SVI values for each tract.
+
+counties_array : list
+    A list of <GIS unique county identifiers>
+
+Returns
+-------
+svi_array : ndarray
+    1-dimensional array containing SVI values for all census tracts within the set of counties
+"""
 
 local_svis = get_radius_svis(svi_data, facility_address, RADIUS)
 
 # Local SVI extrema counts (relative to county and region)
-regional_svis = get_regional_svis(svi_data, COUNTIES_ARRAY)
+regional_svis = get_regional_svis(svi_data, COUNTIES_LIST)
 county = get_county(facility_address)
 county_svis = get_county_svis(svi_data, county)
 regional_top_quartile_count = np.sum(local_svis >= stats.scoreatpercentile(regional_svis, 75)) 
@@ -53,7 +109,6 @@ if SVI_COMPARISON is 'region':
     vuln_score += regional_top_quartile_count 
 elif SVI_COMPARISON is 'county':
     vuln_score += county_top_quartile_count
-"""
 
 vuln_score = vuln_score * VULN_WEIGHT
 
