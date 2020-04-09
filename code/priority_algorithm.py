@@ -115,15 +115,39 @@ of very sick patients, while simultaneously having fewer of the staff and equipm
 these vulnerable patients. Thus, our framework prioritizes PPE allocation to facilities that serve vulnerable
 groups, with the goal of reducing the extent to which the COVID-19 pandemic magnifies existing healthcare disparities.
 
-Facility-level vulnerability
-----------------------------
+Estimate vulnerability based on facility type
+---------------------------------------------
 Implementation: We use categories and designations from the Center for Medicare and Medicaid Services (CMS) to
 identify facilities which provide services services to vulnerable populations.
 
-Indicator justification: While facility types and designations are admittednly an imperfect proxy for the indicator of interest,
-this allows us to assign vulnerability scores based on characteristics of individual facilities rather than relying
-exclusively on coarse geographic data (which often lacks the spatial resolution necessary to differentiate levels of
-vulnerability within a region).
+Justification: While facility types and designations are admittednly an imperfect proxy indicator for the
+vulnerability of a patient population, this allows us to assign vulnerability scores based on characteristics of 
+individual facilities rather than relying exclusively on coarse geographic data (which often lacks the spatial 
+resolution necessary to differentiate levels of vulnerability within a region).
+
+Estimate vulnerability based on local SVI
+-----------------------------------------
+Implementation: We count the number of census tracts within an X mile radius of a facility which have a CDC Social
+Vulnerability Index (SVI) in the top Nth percentile of SVI values in the surrounding county or region (set of counties).
+
+Justification: The CDC SVI provides a measure of "the resilience of communities when confronted by external stresses 
+on human health... such as natural or human-caused disasters, or disease outbreaks". In contrast to alternative mesures
+of healthcare inequity [1] the SVI is provided at fine spatial resolution (per cenus tract) and has been 
+recently updated (2018). We chose to count the number of vulnerable census tracts within in an area (rather than
+taking the mean or median of SVI values) because socioeconomically disadvantaged areas are often geographically
+compact and interspersed amongst more affluent and well-resourced communities [CITE] such that the overall regional
+distribution of SVI values may not shift meaningfully even if an area contains a significant vulnerable population.
+To account for regional differences in population density and the size of counties, our tool identifies vulnerable
+census tracts relative to all other tracts in either the same county (for areas where a single county contains
+an entire major population center) or same region (for areas where a popluation is distributed across multiple counties).
+
+[1] The Health Resources & Services Administration (HRSA) designates geographic areas and specific populations within 
+the United States as being either medically underserved or as having a shortage of health professionals 
+(https://bhw.hrsa.gov/shortage-designation). Despite the close alignment of these designations with our definition 
+of vulnerability, we chose not to use these designation for a number of important reasons. First, many of these
+designations have not been reviwed or updated in over 20 years, even in major metropolitan areas. Second, geographic
+designations are made the county level, which in many cities is too spatially coarse to provide information that could
+inform decisions about PPE allocation across facilities. 
 
 """
 
@@ -133,12 +157,12 @@ for vuln_type in VULN_FACILITIES:
     if vuln_type in facility_type:
         vuln_score += 1
 
-
 # Vulnerability score based on local CDC SVI
 # Incomplete, waiting on code to extract GIS data.
 
 def get_radius_svis(svi_data, facility_address, radius):
 """
+
 Return an array containing SVI values for each census tract within RADIUS of facility address
 
 Parameters
