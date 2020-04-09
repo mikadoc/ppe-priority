@@ -143,4 +143,7 @@ cinemaple/exit/*
 
 .vscode/*
 
+*.json
+*.geojson
 
+myenv/*

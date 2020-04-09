@@ -2,6 +2,8 @@ import numpy as np
 import pandas as pd
 from scipy import stats
 
+from gis_manips import get_sourrounding_census_tracts
+
 ###################################
 ## Scoring and weighting options ##
 ###################################
@@ -57,26 +59,27 @@ for vuln_type in VULN_FACILITIES:
 # Vulnerability score based on local CDC SVI
 # Incomplete, waiting on code to extract GIS data.
 
-def get_radius_svis(svi_data, facility_address, radius):
-"""
-Return an array containing SVI values for each census tract within RADIUS of facility address
+def get_radius_svis(facility_address, radius):
+    """
+    Return an array containing SVI values for each census tract within RADIUS of facility address
 
-Parameters
-----------
-svi_data : <unknown GIS type>
-    GIS data containing census tract shape files and SVI values for each tract.
+    Parameters
+    ----------
+    svi_data : <unknown GIS type>
+        GIS data containing census tract shape files and SVI values for each tract.
 
-facility_address : tuple
-    Tuple of strings in the following format (street_name_and_number, city, state, zip)
+    facility_address : tuple
+        Tuple of strings in the following format (street_name_and_number, city, state, zip)
 
-radius : float
-    Radius facility address to create a buffer for identifying local census tracts
+    radius : float
+        Radius facility address to create a buffer for identifying local census tracts (in miles)
 
-Returns
--------
-svi_array : ndarray
-    1-dimensional array containing SVI values for all census tracts within radius
-"""
+    Returns
+    -------
+    svi_array : ndarray
+        1-dimensional array containing SVI values for all census tracts within radius
+    """
+    census_tract_geoid, census_tract_name = get_sourrounding_census_tracts(facility_address, radius)
 
 def get_regional_svis(svi_data, counties_list)
 """
@@ -97,6 +100,12 @@ svi_array : ndarray
 """
 
 local_svis = get_radius_svis(svi_data, facility_address, RADIUS)
+
+# TODO:
+# Fix state cutting problem
+# Map GEOID to tract id in SVI .csv file
+# Read out corresponding SVI values
+# Define dependencies in requirements.txt file
 
 # Local SVI extrema counts (relative to county and region)
 regional_svis = get_regional_svis(svi_data, COUNTIES_LIST)
