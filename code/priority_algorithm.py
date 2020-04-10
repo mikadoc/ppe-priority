@@ -2,6 +2,62 @@ import numpy as np
 import pandas as pd
 from scipy import stats
 
+"""
+Overview
+--------
+The primary goal of this algorithm is to priorizie allocation of scarce PPE resources to healthcare workers who provide
+acute care for patients with COVID-19 and who are most at risk of infection. This goal is consistent with all
+currently published government allocation guidelines [1], and has strong ethical and pragmatic justifications. An
+in-depth treatment of the ethical justificaitons for this choice of priority can be found in ref 2, but based
+on the assummption that "Harm to health care workers in key sectors of the health care system (i.e., acute and
+critical care, specialty services) could greatly impact the ability of the health care system to respond to any
+acutely ill patient, including those who acquire COVID-19." [2] and is justified through appeal to maximizing the common
+good of public saftey and ensuring reciprocity for healthcare workers who "face a disproportionate buren in protecting
+the public good" [2]. Highest prioritization of healthcare workers and justification for this priority based on 
+reciprocity and maximizing public good have been echoed by both other bioethics experts [3,4,5] as well as the public at large [5].
+
+Beyond prioritization of front-line healthcare workers, a second important goal of this algorithm is to facilitate
+equitable access to PPE by prioritizing facilities that serve vulnerable populations. Unlike many existing allocation
+guidlines, our algorithm explicitly considers vulnerability and equity alongside factors such as worker exposure and 
+remaining supply. A full discussion of how and why we consider equity and vulnerability can be found below.
+
+References
+----------
+1. Survey of PPE allocation guidelines in the context of COVID-19.
+GetUsPPE 2020 https://docs.google.com/document/d/1PjTXkOVK1SZpb1Yx2gPBdkemWxjsJFs28jDjNR3VNTY/edit?usp=sharing
+
+2. "COVID-19: Emergency Prioritization in a Pandemic Personal Protective Equipment (PPE) Allocation Framework"
+British Columbia Ministry of Health
+https://www2.gov.bc.ca/assets/gov/health/about-bc-s-health-care-system/office-of-the-provincial-health-officer/covid-19/ppe_allocation_framework_march_25_2020.pdf
+
+3. "Fair Allocation of Scarce Medical Resources in the Time of Covid-19", NEJM 2020
+https://www.nejm.org/doi/full/10.1056/NEJMsb2005114
+
+4. "Responding to COVID‐19: How to Navigate a Public Health Emergency Legally and Ethically", The Hastings Center Report 2020
+https://onlinelibrary.wiley.com/doi/10.1002/hast.1090
+
+5. "Citizen Voices on Pandemic Flu Choices: A Report of the Public Engagement Pilot Project on Pandemic Influenza"
+Publications of the University of Nebraska Public Policty Center, 2005
+https://digitalcommons.unl.edu/publicpolicypublications/2/
+
+
+
+Sources of indicator data
+-------------------------
+Information used by the algorithm to assign priority scores is taken primarily from self-reports from
+requesting facilities. We chose to focus on self-reported data for two primary reasons. First, self-report
+data can be updated essentially in real time, which is critical for allocation decisions being made during
+a rapidly evolving public health crisis. Second, this allows us to collect the same set of indicators from
+every requesting facility while minimizing systemic measurement biases such as availability of COVID testing
+or lack of universal representation in existing publicly available facility-level data sets.
+
+To the extent that we utilize existing indicator data, we considered only datasets that:
+    1) Are publicly available and free to access.
+    2) Include recently updated information for all (or almost all) facilities and/or areas in the US.
+    2) Have sufficient spatial resolution to allow comparisons across facilities in the same region.
+    3) Publicly report all relevant data collection and analysis methods.
+"""
+
 ###################################
 ## Scoring and weighting options ##
 ###################################
