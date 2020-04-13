@@ -40,8 +40,6 @@ https://onlinelibrary.wiley.com/doi/10.1002/hast.1090
 Publications of the University of Nebraska Public Policty Center, 2005
 https://digitalcommons.unl.edu/publicpolicypublications/2/
 
-
-
 Sources of indicator data
 -------------------------
 Information used by the algorithm to assign priority scores is taken primarily from self-reports from
@@ -58,27 +56,71 @@ To the extent that we utilize existing indicator data, we considered only datase
     3) Publicly report all relevant data collection and analysis methods.
 """
 
-###################################
-## Scoring and weighting options ##
-###################################
+##############################################
+## Scoring, grouping, and weighting options ##
+##############################################
+
+"""
+Group-based reserve system
+--------------------------
+Our priority algorithm uses a reserve system [1] to balance conflicting priorities (e.g. equity, reciprocity,
+instrumental value, etc.). In this system, facilities are split into groups based on the kind of care they provide 
+and the level of risk to healthcare workers. Each group is reserved a percentage of the total PPE available for 
+allocation, and priority points are assigned and compared only within groups. This allows us to ensure that resources
+are spread across facilities that play different, complementary healthcare roles within a community. It also allows us
+to apply distinct, facility appropriate socring criteria within each group. For example, it does not make sense to 
+compare an acute care hospital and a community health clinic based ICU bed occupancy.
+
+Facilities in Group 1 provide acute, life-saving care to patients with COVID-19 and expose staff to maximum risk of
+infection through close/prolonged contact with infected indiviuals and/or the use of aeorsolizing procedures
+(e.g. intubation). 
+
+Group 2 includes residential facilities that do not provide acute care for COVID-19 patients but where there is high
+risk of transmission due to restricted ability to implement social distancing practices. 
+
+Group 3 includes all other facilities, including outpatient clinics and social services agencies.
+
+Within each tier, we assign points based on multiple factors including remaining supplies of PPE and the degree to
+which a facility provides care to underserved and high-risk populations.
+
+1. Triage Protocol Design for Ventilator Rationing in a Pandemic: Integrating Multiple Ethical Values through Reserves
+Pathak et al., 2020 http://economics.mit.edu/files/19358
+"""
 
 # Set of facility types serving vulnerable or underserved populations
-VULN_FACILITIES = ['fqhc',
-                   'dsh',
-                   'rhc',
-                   'cah',
-                   'indian_tribal',
-                   'chc']
+VULN_FACILITIES = ['fqhc', # federally qualified health centers (and look-alikes)
+                   'dsh', # medicaid disproportionate share hospital
+                   'rhc', # rural health clinic
+                   'cah', # critical access hospital
+                   'indian_tribal', # indian or tribal healthcare facility
+                   'chc', # community health center
+                   'hs', # homeless shelter
+                   'cf_dt'] # correctional facility or detention center
+
+# Facilities providing life-saving care to the sickest COVID-patients
+GROUP_1_FACILITIES = ['ach', # acute care hospital
+                     'fs_er', #freestanding emergency room
+                     'fh', # field hospital
+                     'hof', # hospital overflow facility
+                     'ems'] # emergency medical services / fire department
+
+
+# Residential facilities with limited social distancing and patients at high risk of serious illness
+GROUP_2_FACILITEIS = ['nach', # non-acute care hospitals
+                     'rp', # residential/inpatient psychiatric facilities
+                     'ir', # inpatient rehabilitaiton facilities
+                     'rs', # residential substance treatment centers
+                     'nh_sn_al', # nursing homes, skilled nursing, and assisted living facilities
+                     'ltc', # long term care facilities
+                     'gh', # group homes
+                     'hs', # homeless shelters
+                     'cf_dt'] # correctional facilities and detention centers
 
 # Domain weighting multipliers
 NEED_WEIGHT = 1
 VULN_WEIGHT = 1
 EXPOSURE_WEIGHT = 1
 CAPCITY_WEIGHT = 1
-
-
-
-
 
 ###################
 ## Urgency score ##
