@@ -1,6 +1,9 @@
 import numpy as np
 import pandas as pd
+import geopandas as gpd
 from scipy import stats
+import zipcodes
+
 
 """
 Overview
@@ -13,12 +16,12 @@ on the assummption that "Harm to health care workers in key sectors of the healt
 critical care, specialty services) could greatly impact the ability of the health care system to respond to any
 acutely ill patient, including those who acquire COVID-19." [2] and is justified through appeal to maximizing the common
 good of public saftey and ensuring reciprocity for healthcare workers who "face a disproportionate buren in protecting
-the public good" [2]. Highest prioritization of healthcare workers and justification for this priority based on 
+the public good" [2]. Highest prioritization of healthcare workers and justification for this priority based on
 reciprocity and maximizing public good have been echoed by both other bioethics experts [3,4,5] as well as the public at large [5].
 
 Beyond prioritization of front-line healthcare workers, a second important goal of this algorithm is to facilitate
 equitable access to PPE by prioritizing facilities that serve vulnerable populations. Unlike many existing allocation
-guidlines, our algorithm explicitly considers vulnerability and equity alongside factors such as worker exposure and 
+guidlines, our algorithm explicitly considers vulnerability and equity alongside factors such as worker exposure and
 remaining supply. A full discussion of how and why we consider equity and vulnerability can be found below.
 
 References
@@ -102,58 +105,103 @@ CAPCITY_WEIGHT = 1
 urgency_score = 0
 
 # Assign base urgency points based on how long current supply is predicted to last.
-if dat.loc[row_idx,"Current Supply"] is "No supply remaining": # critical need
-    urgency_score += 5
-elif dat.loc[row_idx,"Current Supply"] is "2 days or less": # dire need; future data will be "1–3 days"
-    urgency_score += 4
-elif dat.loc[row_idx,"Current Supply"] is "1 week or less": # urgent need; future data will be "4–7 days"
-    urgency_score += 3
-elif dat.loc[row_idx,"Current Supply"] is "2 weeks or less": # high need; future data will bee "1–2 weeks"
-    urgency_score += 2
-elif dat.loc[row_idx,"Current Supply"] is "More than 2 weeks": # moderate need
-    urgency_score += 1
+# if dat.loc[row_idx,"Current Supply"] is "No supply remaining": # critical need
+#     urgency_score += 5
+# elif dat.loc[row_idx,"Current Supply"] is "2 days or less": # dire need; future data will be "1–3 days"
+#     urgency_score += 4
+# elif dat.loc[row_idx,"Current Supply"] is "1 week or less": # urgent need; future data will be "4–7 days"
+#     urgency_score += 3
+# elif dat.loc[row_idx,"Current Supply"] is "2 weeks or less": # high need; future data will bee "1–2 weeks"
+#     urgency_score += 2
+# elif dat.loc[row_idx,"Current Supply"] is "More than 2 weeks": # moderate need
+#     urgency_score += 1
+#
+# # Assign Surge Points based on PPE conservation practices
+# if dat.loc[row_idx,"Item Surge Capacity"] is "Conventional":
+#     need_score *= 1
+# elif dat.loc[row_idx,"Item Surge Capacity"] is "Contingency":
+#     need_score *= 10
+# elif dat.loc[row_idx,"Item Surge Capacity"] is "Crisis":
+#     need_score *= 100
 
-# Assign Surge Points based on PPE conservation practices
-if dat.loc[row_idx,"Item Surge Capacity"] is "Conventional": 
-    need_score *= 1
-elif dat.loc[row_idx,"Item Surge Capacity"] is "Contingency": 
-    need_score *= 10
-elif dat.loc[row_idx,"Item Surge Capacity"] is "Crisis":
-    need_score *= 100
+########################
+# Vulnerability score ##
+########################
 
-#########################
-## Vulnerability score ##
-#########################
-
-vuln_score = 0
-
-for vuln_type in VULN_FACILITIES:
-    if vuln_type in facility_type:
-        vuln_score += 1
+# vuln_score = 0
+#
+# for vuln_type in VULN_FACILITIES:
+#     if vuln_type in facility_type:
+#         vuln_score += 1
 
 # Vulnerability score based on local CDC SVI
 
-def get_radius_tracts(gis_data, facility_address, radius):
+
+
+def point_from_zip(zcode):
+    """
+    Get a geopandas point geodataframe from a (valid) zipcode
     """
 
+    z = zipcodes.matching(zcode)[0]
+    pdf = pd.DataFrame({
+        'zip': [z['zip_code']],
+        'lat': [np.float(z['lat'])],
+        'lon': [np.float(z['long'])]
+    })
+
+    point = gpd.GeoDataFrame(pdf, geometry=gpd.points_from_xy(pdf.lon, pdf.lat), crs=4326)
+
+    return point
+
+
+def miles_to_meters(miles):
+    return miles / 0.00062137
+
+
+def get_radius_tracts(census_tract_geoms, facility_address, radius):
+    """
     Return an array containing 11-digit FIPS codes for each census tract within RADIUS of facility_address.
 
     Parameters
     ----------
-    gis_data : <unknown GIS type>
-        <data needed to do the fancy GIS stuff>
+    census_tract_geoms : sting
+        file path to shapefile of census tract geometries `tracts_usna.shp` - tracts
+        have been projected to US National Atlas Equal Area (EPSG:2163)
 
     facility_address : tuple
         Tuple of strings in the following format (street_name_and_number, city, state, zip)
+        Assumes valid zipcode
 
     radius : float
         Radius facility address to create a buffer for identifying local census tracts
+        in meters (use `miles_to_meters` to convert)
 
     Returns
     -------
     tract_array : ndarray
         1-dimensional array containing 11-digit FIPS codes for all census tracts within radius
     """
+
+    # Geopandas object for census tracts
+    tracts = gpd.read_file(census_tract_geoms)
+
+    zip_code = facility_address[3]
+
+    point = point_from_zip(zip_code)
+    point = point.to_crs(tracts.crs)
+
+    # Buffer to radius around point
+    point['geometry'] = point.geometry.buffer(radius)
+
+    # Find intersecting census tracts
+    intersecting_tracts = gpd.sjoin(tracts, point, how='inner', op='intersects')
+
+    # Get intersecting FIPS codes
+    fips = intersecting_tracts['FIPS'].values
+
+    return fips
+
 
 def get_county(gis_data, facility_address):
     """
@@ -174,90 +222,106 @@ def get_county(gis_data, facility_address):
     """
 
 
-def get_county_tracts(gis_data, counties_list):
+def get_county(census_tract_geoms, facility_address):
     """
-    Return an array containing 11-digit FIPS codes for each census tract within a list of counties.
+    Return the county containing the facility address.
 
     Parameters
     ----------
-    gis_data : <unknown GIS type>
-        <data needed to do the fancy GIS stuff>
- 
+    census_tract_geoms : sting
+        file path to shapefile of census tract geometries `tracts_usna.shp` - tracts
+        have been projected to US National Atlas Equal Area (EPSG:2163)
 
-    counties_array : list
-        A list of <GIS unique county identifiers>
+    facility_address : tuple
+        Tuple of strings in the following format (street_name_and_number, city, state, zip)
 
     Returns
     -------
-    tract_array : ndarray
-        1-dimensional array containing 11-digit FIPS codes for all census tracts within counties_list.
+    county_id : np.array
+        STCOFIPS (State / County FIPS, e.g. 15007). First two numbers correspond to State,
+        last 3 numbers correspond to county
     """
 
-local_svis = get_radius_svis(svi_data, facility_address, RADIUS)
+    # Geopandas object for census tracts
+    tracts = gpd.read_file(census_tract_geoms)
 
-# Local SVI extrema counts (relative to county and region)
-regional_svis = get_regional_svis(svi_data, COUNTIES_LIST)
-county = get_county(facility_address)
-county_svis = get_county_svis(svi_data, county)
-regional_top_quartile_count = np.sum(local_svis >= stats.scoreatpercentile(regional_svis, 75)) 
-county_top_quartile_count = np.sum(local_svis >= stats.scoreatpercentile(county_svis, 75)) 
+    zip_code = facility_address[3]
 
-if SVI_COMPARISON is 'region':
-    vuln_score += regional_top_quartile_count 
-elif SVI_COMPARISON is 'county':
-    vuln_score += county_top_quartile_count
+    point = point_from_zip(zip_code)
+    point = point.to_crs(tracts.crs)
 
-vuln_score = vuln_score * VULN_WEIGHT
+    intersecting_county = gpd.sjoin(tracts, point, how='inner', op='intersects')
 
-####################
-## Exposure score ##
-####################
+    st_county_fips = intersecting_county['STCOFIPS'].values
 
-exposure_score = 0
-
-if has_covid is True:
-    exposure_score += 10
-
-if has_icu is True:
-    exposure_score += 6
-
-# Aerosol generating procedures but is not an ICU (e.g. freestanding ERs, paramedics)
-if aerosols is True and has_icu is False:
-    exposure_score += 3
-
-exposure_score = exposure_score * EXPOSURE_WEIGHT
-
-####################
-## Capacity score ##
-####################
-
-capacity_score = 0
-
-# Occupancy data is optional. 
-
-if bed_occupancy is 100_150:    
-    capacity_score += 1
-elif bed_occupancy is 151_200:
-    capacity_score += 2
-elif bed_occupancy is over_200:
-    capacity_score += 3
-elif bed_occupancy is not_reported:
-    capacity_score += regional_median_bed_occupancy_points
-
-if has_icu:
-    if icu_occupancy is 100_150:    
-        capacity_score += 1
-    elif icu_occupancy is 151_200:
-        capacity_score += 2
-    elif icu_occupancy is over_200:
-        capacity_score += 3
-    elif icu_occupancy is not_reported:
-        capacity_score += regional_median_icu_occupancy_points
-
-capacity_score = capacity_score * CAPACITY_WEIGHT
-
-##########################
-## Total Priority Score ##
-##########################
-
-priority_score = need_score + vuln_score + exposure_score + capacity_score
+    return st_county_fips
+    
+#
+# local_svis = get_radius_svis(svi_data, facility_address, RADIUS)
+#
+# # Local SVI extrema counts (relative to county and region)
+# regional_svis = get_regional_svis(svi_data, COUNTIES_LIST)
+# county = get_county(facility_address)
+# county_svis = get_county_svis(svi_data, county)
+# regional_top_quartile_count = np.sum(local_svis >= stats.scoreatpercentile(regional_svis, 75))
+# county_top_quartile_count = np.sum(local_svis >= stats.scoreatpercentile(county_svis, 75))
+#
+# if SVI_COMPARISON is 'region':
+#     vuln_score += regional_top_quartile_count
+# elif SVI_COMPARISON is 'county':
+#     vuln_score += county_top_quartile_count
+#
+# vuln_score = vuln_score * VULN_WEIGHT
+#
+# ####################
+# ## Exposure score ##
+# ####################
+#
+# exposure_score = 0
+#
+# if has_covid is True:
+#     exposure_score += 10
+#
+# if has_icu is True:
+#     exposure_score += 6
+#
+# # Aerosol generating procedures but is not an ICU (e.g. freestanding ERs, paramedics)
+# if aerosols is True and has_icu is False:
+#     exposure_score += 3
+#
+# exposure_score = exposure_score * EXPOSURE_WEIGHT
+#
+# ####################
+# ## Capacity score ##
+# ####################
+#
+# capacity_score = 0
+#
+# # Occupancy data is optional.
+#
+# if bed_occupancy is 100_150:
+#     capacity_score += 1
+# elif bed_occupancy is 151_200:
+#     capacity_score += 2
+# elif bed_occupancy is over_200:
+#     capacity_score += 3
+# elif bed_occupancy is not_reported:
+#     capacity_score += regional_median_bed_occupancy_points
+#
+# if has_icu:
+#     if icu_occupancy is 100_150:
+#         capacity_score += 1
+#     elif icu_occupancy is 151_200:
+#         capacity_score += 2
+#     elif icu_occupancy is over_200:
+#         capacity_score += 3
+#     elif icu_occupancy is not_reported:
+#         capacity_score += regional_median_icu_occupancy_points
+#
+# capacity_score = capacity_score * CAPACITY_WEIGHT
+#
+# ##########################
+# ## Total Priority Score ##
+# ##########################
+#
+# priority_score = need_score + vuln_score + exposure_score + capacity_score

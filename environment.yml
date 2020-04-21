@@ -1,0 +1,15 @@
+name: ppe-priority
+
+channels:
+  - conda-forge
+  - defaults
+
+dependencies:
+  - numpy
+  - scipy>=1.4.1
+  - pandas>=1.0.3
+  - geopandas>=0.7
+  - rtree>=0.9.4
+  - pip
+  - pip:
+      - zipcodes>=1.1.0
