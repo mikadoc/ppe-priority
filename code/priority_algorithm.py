@@ -203,25 +203,6 @@ def get_radius_tracts(census_tract_geoms, facility_address, radius):
     return fips
 
 
-def get_county(gis_data, facility_address):
-    """
-    Return the county containing the facility address.
-
-    Parameters
-    ----------
-    gis_data : <unknown GIS type>
-        <data needed to do the fancy GIS stuff>
-
-    facility_address : tuple
-        Tuple of strings in the following format (street_name_and_number, city, state, zip)
-
-    Returns
-    -------
-    county_id : <unknown GIS type>
-        <Unique GIS county id>
-    """
-
-
 def get_county(census_tract_geoms, facility_address):
     """
     Return the county containing the facility address.
@@ -255,7 +236,7 @@ def get_county(census_tract_geoms, facility_address):
     st_county_fips = intersecting_county['STCOFIPS'].values
 
     return st_county_fips
-    
+
 #
 # local_svis = get_radius_svis(svi_data, facility_address, RADIUS)
 #
