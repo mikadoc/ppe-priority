@@ -5,20 +5,20 @@ from scipy import stats
 """
 Overview
 --------
-The primary goal of this algorithm is to priorizie allocation of scarce PPE resources to healthcare workers who provide
+The primary goal of this algorithm is to prioritize allocation of scarce PPE resources to healthcare workers who provide
 acute care for patients with COVID-19 and who are most at risk of infection. This goal is consistent with all
 currently published government allocation guidelines [1], and has strong ethical and pragmatic justifications. An
-in-depth treatment of the ethical justificaitons for this choice of priority can be found in ref 2, but based
-on the assummption that "Harm to health care workers in key sectors of the health care system (i.e., acute and
+in-depth treatment of the ethical justifications for this choice of priority can be found in ref 2, but based
+on the assumption that "Harm to health care workers in key sectors of the health care system (i.e., acute and
 critical care, specialty services) could greatly impact the ability of the health care system to respond to any
 acutely ill patient, including those who acquire COVID-19." [2] and is justified through appeal to maximizing the common
-good of public saftey and ensuring reciprocity for healthcare workers who "face a disproportionate buren in protecting
+good of public saftey and ensuring reciprocity for healthcare workers who "face a disproportionate burden in protecting
 the public good" [2]. Highest prioritization of healthcare workers and justification for this priority based on 
 reciprocity and maximizing public good have been echoed by both other bioethics experts [3,4,5] as well as the public at large [5].
 
 Beyond prioritization of front-line healthcare workers, a second important goal of this algorithm is to facilitate
 equitable access to PPE by prioritizing facilities that serve vulnerable populations. Unlike many existing allocation
-guidlines, our algorithm explicitly considers vulnerability and equity alongside factors such as worker exposure and 
+guidelines, our algorithm explicitly considers vulnerability and equity alongside factors such as worker exposure and 
 remaining supply. A full discussion of how and why we consider equity and vulnerability can be found below.
 
 References
@@ -79,7 +79,7 @@ GROUP_1_FACILITIES = ['ach', # acute care hospital
 
 
 # Residential facilities with limited social distancing and patients at high risk of serious illness
-GROUP_2_FACILITEIS = ['nach', # non-acute care hospitals
+GROUP_2_FACILITIES = ['nach', # non-acute care hospitals
                      'rp', # residential/inpatient psychiatric facilities
                      'ir', # inpatient rehabilitaiton facilities
                      'rs', # residential substance treatment centers
