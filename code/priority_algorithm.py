@@ -81,7 +81,7 @@ GROUP_1_FACILITIES = ['ach', # acute care hospital
 # Residential facilities with limited social distancing and patients at high risk of serious illness
 GROUP_2_FACILITIES = ['nach', # non-acute care hospitals
                      'rp', # residential/inpatient psychiatric facilities
-                     'ir', # inpatient rehabilitaiton facilities
+                     'ir', # inpatient rehabilitation facilities
                      'rs', # residential substance treatment centers
                      'nh_sn_al', # nursing homes, skilled nursing, and assisted living facilities
                      'ltc', # long term care facilities
@@ -93,25 +93,25 @@ GROUP_2_FACILITIES = ['nach', # non-acute care hospitals
 NEED_WEIGHT = 1
 VULN_WEIGHT = 1
 EXPOSURE_WEIGHT = 1
-CAPCITY_WEIGHT = 1
+CAPACITY_WEIGHT = 1
 
-###################
-## Urgency score ##
-###################
+##################
+##  Need score  ##
+##################
 
-urgency_score = 0
+need_score = 0
 
 # Assign base urgency points based on how long current supply is predicted to last.
 if dat.loc[row_idx,"Current Supply"] is "No supply remaining": # critical need
-    urgency_score += 5
+    need_score += 5
 elif dat.loc[row_idx,"Current Supply"] is "2 days or less": # dire need; future data will be "1–3 days"
-    urgency_score += 4
+    need_score += 4
 elif dat.loc[row_idx,"Current Supply"] is "1 week or less": # urgent need; future data will be "4–7 days"
-    urgency_score += 3
+    need_score += 3
 elif dat.loc[row_idx,"Current Supply"] is "2 weeks or less": # high need; future data will bee "1–2 weeks"
-    urgency_score += 2
+    need_score += 2
 elif dat.loc[row_idx,"Current Supply"] is "More than 2 weeks": # moderate need
-    urgency_score += 1
+    need_score += 1
 
 # Assign Surge Points based on PPE conservation practices
 if dat.loc[row_idx,"Item Surge Capacity"] is "Conventional": 
